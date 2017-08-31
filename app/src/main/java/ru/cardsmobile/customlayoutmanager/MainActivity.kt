@@ -19,7 +19,7 @@ class MainActivity : AppCompatActivity() {
 
         with(recyclerView) {
             addItemDecoration(CardDecoration(resources.getDimensionPixelSize(R.dimen.margin)))
-            layoutManager = CustomLayoutManager()
+            layoutManager = CustomLayoutManager(this)
             adapter = CardsAdapter()
         }
 

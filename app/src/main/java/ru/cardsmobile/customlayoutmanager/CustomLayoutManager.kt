@@ -7,12 +7,12 @@ import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 
-class CustomLayoutManager : RecyclerView.LayoutManager() {
+class CustomLayoutManager(val recyclerView: RecyclerView) : RecyclerView.LayoutManager() {
 
     var currentLayout: DefaultScene = GridScene(this)
         set(value) {
             field = value.from(field)
-            requestLayout()
+            recyclerView.adapter.notifyItemRangeChanged(0, itemCount)
         }
 
     override fun generateDefaultLayoutParams() = LayoutParams(MATCH_PARENT, WRAP_CONTENT)
