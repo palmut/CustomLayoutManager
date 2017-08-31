@@ -1,12 +1,14 @@
 package ru.cardsmobile.customlayoutmanager
 
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
-import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
-import android.view.Menu
-import android.view.MenuItem
-
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
+import android.view.ViewGroup
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.content_main.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -15,25 +17,52 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
 
-        fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show()
+        with(recyclerView) {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            adapter = CardsAdapter()
+        }
+
+    }
+}
+
+class CustomCardVewHolder(view: CustomCardView) : RecyclerView.ViewHolder(view)
+
+const val ITEMCOUNT = 100
+class CardsAdapter : RecyclerView.Adapter<CustomCardVewHolder>() {
+
+    private val cardColors = listOf<Int>(
+            Color.parseColor("#E57373"),
+            Color.parseColor("#F06292"),
+            Color.parseColor("#BA68C8"),
+            Color.parseColor("#9575CD"),
+            Color.parseColor("#7986CB"),
+            Color.parseColor("#64B5F6"),
+            Color.parseColor("#4FC3F7"),
+            Color.parseColor("#4DD0E1"),
+            Color.parseColor("#4DB6AC"),
+            Color.parseColor("#81C784"),
+            Color.parseColor("#AED581"),
+            Color.parseColor("#DCE775"),
+            Color.parseColor("#FFF176"),
+            Color.parseColor("#FFD54F"),
+            Color.parseColor("#FFD54F"),
+            Color.parseColor("#FF8A65"),
+            Color.parseColor("#A1887F"),
+            Color.parseColor("#E0E0E0"),
+            Color.parseColor("#90A4AE")
+    )
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
+            CustomCardVewHolder(CustomCardView(parent.context))
+
+    override fun getItemCount() = ITEMCOUNT
+
+    override fun onBindViewHolder(holder: CustomCardVewHolder?, position: Int) {
+        holder?.let {
+            with(holder.itemView as CustomCardView) {
+                cardBackgroundColor = ColorStateList.valueOf(cardColors[position % cardColors.size])
+                textView.text = position.toString()
+            }
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.menu_main, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        return when (item.itemId) {
-            R.id.action_settings -> true
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
 }
