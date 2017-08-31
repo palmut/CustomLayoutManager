@@ -2,10 +2,11 @@ package ru.cardsmobile.customlayoutmanager
 
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.graphics.Rect
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.view.View
 import android.view.ViewGroup
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
@@ -18,16 +19,24 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
 
         with(recyclerView) {
-            layoutManager = LinearLayoutManager(this@MainActivity)
+            addItemDecoration(CardDecoration(resources.getDimensionPixelSize(R.dimen.margin)))
+            layoutManager = CustomLayoutManager()
             adapter = CardsAdapter()
         }
 
     }
 }
 
+class CardDecoration(val margin: Int) : RecyclerView.ItemDecoration() {
+    override fun getItemOffsets(outRect: Rect?, view: View?, parent: RecyclerView?, state: RecyclerView.State?) {
+        outRect?.set(margin, margin / 2, margin, margin / 2)
+    }
+}
+
 class CustomCardVewHolder(view: CustomCardView) : RecyclerView.ViewHolder(view)
 
-const val ITEMCOUNT = 100
+const val ITEMS_COUNT = 100
+
 class CardsAdapter : RecyclerView.Adapter<CustomCardVewHolder>() {
 
     private val cardColors = listOf<Int>(
@@ -51,10 +60,11 @@ class CardsAdapter : RecyclerView.Adapter<CustomCardVewHolder>() {
             Color.parseColor("#E0E0E0"),
             Color.parseColor("#90A4AE")
     )
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
             CustomCardVewHolder(CustomCardView(parent.context))
 
-    override fun getItemCount() = ITEMCOUNT
+    override fun getItemCount() = ITEMS_COUNT
 
     override fun onBindViewHolder(holder: CustomCardVewHolder?, position: Int) {
         holder?.let {
