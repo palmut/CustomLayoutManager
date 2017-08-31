@@ -9,7 +9,6 @@ import android.support.v7.widget.RecyclerView
 import android.view.View
 import android.view.ViewGroup
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.content_main.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -24,6 +23,9 @@ class MainActivity : AppCompatActivity() {
             adapter = CardsAdapter()
         }
 
+        fabLinear.setOnClickListener { (recyclerView.layoutManager as? CustomLayoutManager)?.showLinear() }
+        fabStack.setOnClickListener { (recyclerView.layoutManager as? CustomLayoutManager)?.showStack() }
+        fabGrid.setOnClickListener { (recyclerView.layoutManager as? CustomLayoutManager)?.showGrid() }
     }
 }
 
@@ -53,7 +55,6 @@ class CardsAdapter : RecyclerView.Adapter<CustomCardVewHolder>() {
             Color.parseColor("#AED581"),
             Color.parseColor("#DCE775"),
             Color.parseColor("#FFF176"),
-            Color.parseColor("#FFD54F"),
             Color.parseColor("#FFD54F"),
             Color.parseColor("#FF8A65"),
             Color.parseColor("#A1887F"),

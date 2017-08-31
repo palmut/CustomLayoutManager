@@ -10,6 +10,10 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 class CustomLayoutManager : RecyclerView.LayoutManager() {
 
     var currentLayout: DefaultScene = GridScene(this)
+        set(value) {
+            field = value.from(field)
+            requestLayout()
+        }
 
     override fun generateDefaultLayoutParams() = LayoutParams(MATCH_PARENT, WRAP_CONTENT)
 
@@ -57,6 +61,16 @@ class CustomLayoutManager : RecyclerView.LayoutManager() {
         onLayoutChildren(recycler, state)
         return consumed
     }
+
+    fun showLinear() {
+        currentLayout = LinearScene(this)
+    }
+    fun showStack() {
+        currentLayout = StackScene(this)
+    }
+    fun showGrid() {
+        currentLayout = GridScene(this)
+    }
 }
 
 typealias Coords = Pair<Int, Int>
@@ -93,7 +107,18 @@ sealed class DefaultScene(val layoutManager: CustomLayoutManager) {
         return -consumed
     }
 
-    open fun getMaxScroll() = layoutManager.run { itemCount * cardSize.y - height + paddingTop + paddingBottom}
+    open fun getMaxScroll() = layoutManager.run { itemCount * cardSize.y - height + paddingTop + paddingBottom }
+
+    open fun from(layout: DefaultScene): DefaultScene {
+        updateCardSize(layoutManager.run { width - paddingLeft - paddingRight })
+        scrollOffset = layout.scrollOffset
+        fixScrollOffset()
+        return this
+    }
+
+    open fun fixScrollOffset() {
+        scrollOffset = Math.max(0, Math.min(scrollOffset, getMaxScroll()))
+    }
 }
 
 class LinearScene(layoutManager: CustomLayoutManager) : DefaultScene(layoutManager)
@@ -102,7 +127,7 @@ class StackScene(layoutManager: CustomLayoutManager) : DefaultScene(layoutManage
 
     private fun distortion(x: Double) = when {
         x > 0 -> 2.0 / (1.0 + Math.pow(0.6, 1.1 * x)) - 1.0
-        else -> cardSize.y.toDouble() / layoutManager.run { height - paddingTop  - paddingBottom }.toDouble() * x / 1.02f
+        else -> cardSize.y.toDouble() / layoutManager.run { height - paddingTop - paddingBottom }.toDouble() * x / 1.02f
     }
 
     override fun getCardViewCoords(position: Int): Coords {
@@ -147,7 +172,7 @@ open class GridScene(layoutManager: CustomLayoutManager) : DefaultScene(layoutMa
         return IntProgression.fromClosedRange(start, end, -1)
     }
 
-    override fun getMaxScroll() = layoutManager.run { (itemCount + 1) / 2 * cardSize.y - height + paddingBottom + paddingTop  }
+    override fun getMaxScroll() = layoutManager.run { (itemCount + 1) / 2 * cardSize.y - height + paddingBottom + paddingTop }
 
     override fun scrollBy(dy: Int): Int {
         val consumed = if (dy < 0) {
@@ -158,4 +183,9 @@ open class GridScene(layoutManager: CustomLayoutManager) : DefaultScene(layoutMa
         internalScrollOffset += consumed
         return -consumed
     }
+
+    override fun fixScrollOffset() {
+        internalScrollOffset = Math.max(0, Math.min(internalScrollOffset, getMaxScroll()))
+    }
+
 }
