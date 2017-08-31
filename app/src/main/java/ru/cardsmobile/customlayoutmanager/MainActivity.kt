@@ -21,6 +21,7 @@ class MainActivity : AppCompatActivity() {
             addItemDecoration(CardDecoration(resources.getDimensionPixelSize(R.dimen.margin)))
             layoutManager = CustomLayoutManager(this)
             adapter = CardsAdapter()
+            itemAnimator = CustomItemAnimator()
         }
 
         fabLinear.setOnClickListener { (recyclerView.layoutManager as? CustomLayoutManager)?.showLinear() }
@@ -70,6 +71,11 @@ class CardsAdapter : RecyclerView.Adapter<CustomCardVewHolder>() {
     override fun onBindViewHolder(holder: CustomCardVewHolder?, position: Int) {
         holder?.let {
             with(holder.itemView as CustomCardView) {
+                translationX= 0f
+                translationY= 0f
+                scaleX = 1f
+                scaleY = 1f
+                alpha = 1f
                 cardBackgroundColor = ColorStateList.valueOf(cardColors[position % cardColors.size])
                 textView.text = position.toString()
             }
