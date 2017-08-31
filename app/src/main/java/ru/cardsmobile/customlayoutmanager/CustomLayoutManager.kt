@@ -40,7 +40,7 @@ class CustomLayoutManager : RecyclerView.LayoutManager() {
         val (x, y) = currentLayout.getCardViewCoords(position)
         addView(view, index)
         measureChild(view, 0, 0)
-        val size = layout.getCardSizeForPosition(position)
+        val size = layout.cardSize
         layoutDecorated(view, x, y, x + size.x, y + size.y)
         return view
     }
@@ -48,9 +48,17 @@ class CustomLayoutManager : RecyclerView.LayoutManager() {
     private fun measureChildSize(layout: DefaultScene) {
         layout.updateCardSize(width - paddingLeft - paddingRight)
     }
+
+    override fun canScrollVertically() = true
+
+    override fun scrollVerticallyBy(dy: Int, recycler: RecyclerView.Recycler, state: RecyclerView.State): Int {
+        val consumed = currentLayout.scrollBy(dy)
+        // requestLayout ignored
+        onLayoutChildren(recycler, state)
+        return consumed
+    }
 }
 
-// просто для красоты
 typealias Coords = Pair<Int, Int>
 
 sealed class DefaultScene(private val layoutManager: CustomLayoutManager) {
@@ -58,21 +66,33 @@ sealed class DefaultScene(private val layoutManager: CustomLayoutManager) {
 
     val cardSize = Point(-1, -1)
 
-    open fun getCardViewCoords(position: Int) =
-            Coords(layoutManager.paddingLeft,
-                    layoutManager.height - layoutManager.paddingBottom - (position + 1) * cardSize.y)
+    var scrollOffset: Int = 0
 
-    open fun updateCardSize(measuredChildWidth: Int) {
+    fun getCardViewCoords(position: Int) =
+            Coords(layoutManager.paddingLeft,
+                    scrollOffset + layoutManager.height - layoutManager.paddingBottom - (position + 1) * cardSize.y)
+
+    fun updateCardSize(measuredChildWidth: Int) {
         cardSize.set(measuredChildWidth, (measuredChildWidth.toFloat() / CARD_PROPORTION).toInt())
     }
 
-    open fun visibleRange(): IntProgression {
-        val start = Math.min((layoutManager.height) / cardSize.y + 1, layoutManager.itemCount - 1)
-        val end = 0
+    fun visibleRange(): IntProgression {
+        val start = Math.min((scrollOffset + layoutManager.height) / cardSize.y + 1, layoutManager.itemCount - 1)
+        val end = Math.max((scrollOffset) / cardSize.y - 1, 0)
         return IntProgression.fromClosedRange(start, end, -1)
     }
 
-    open fun getCardSizeForPosition(position: Int) = cardSize
+    fun scrollBy(dy: Int): Int {
+        val consumed = if (dy < 0) {
+            Math.min(-dy, getMaxScroll() - scrollOffset)
+        } else {
+            -Math.min(scrollOffset, dy)
+        }
+        scrollOffset += consumed
+        return -consumed
+    }
+
+    fun getMaxScroll() = layoutManager.run { itemCount * cardSize.y - height + paddingTop + paddingBottom}
 }
 
 class LinearScene(layoutManager: CustomLayoutManager) : DefaultScene(layoutManager)

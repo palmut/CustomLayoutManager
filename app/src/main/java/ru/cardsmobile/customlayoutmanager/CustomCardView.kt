@@ -30,4 +30,5 @@ class CustomCardView @JvmOverloads constructor(context: Context, attrs: Attribut
             setMeasuredDimension(measuredWidth, (measuredWidth.toFloat() / CARD_PROPORTION).toInt())
         }
     }
+
 }

@@ -39,7 +39,7 @@ const val ITEMS_COUNT = 100
 
 class CardsAdapter : RecyclerView.Adapter<CustomCardVewHolder>() {
 
-    private val cardColors = listOf<Int>(
+    private val cardColors = listOf(
             Color.parseColor("#E57373"),
             Color.parseColor("#F06292"),
             Color.parseColor("#BA68C8"),
