@@ -9,7 +9,7 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 
 class CustomLayoutManager : RecyclerView.LayoutManager() {
 
-    var currentLayout: DefaultScene = StackScene(this)
+    var currentLayout: DefaultScene = GridScene(this)
 
     override fun generateDefaultLayoutParams() = LayoutParams(MATCH_PARENT, WRAP_CONTENT)
 
@@ -73,7 +73,7 @@ sealed class DefaultScene(val layoutManager: CustomLayoutManager) {
             Coords(layoutManager.paddingLeft,
                     scrollOffset + layoutManager.height - layoutManager.paddingBottom - (position + 1) * cardSize.y)
 
-    fun updateCardSize(measuredChildWidth: Int) {
+    open fun updateCardSize(measuredChildWidth: Int) {
         cardSize.set(measuredChildWidth, (measuredChildWidth.toFloat() / CARD_PROPORTION).toInt())
     }
 
@@ -83,7 +83,7 @@ sealed class DefaultScene(val layoutManager: CustomLayoutManager) {
         return IntProgression.fromClosedRange(start, end, -1)
     }
 
-    fun scrollBy(dy: Int): Int {
+    open fun scrollBy(dy: Int): Int {
         val consumed = if (dy < 0) {
             Math.min(-dy, getMaxScroll() - scrollOffset)
         } else {
@@ -93,7 +93,7 @@ sealed class DefaultScene(val layoutManager: CustomLayoutManager) {
         return -consumed
     }
 
-    fun getMaxScroll() = layoutManager.run { itemCount * cardSize.y - height + paddingTop + paddingBottom}
+    open fun getMaxScroll() = layoutManager.run { itemCount * cardSize.y - height + paddingTop + paddingBottom}
 }
 
 class LinearScene(layoutManager: CustomLayoutManager) : DefaultScene(layoutManager)
@@ -122,5 +122,40 @@ class StackScene(layoutManager: CustomLayoutManager) : DefaultScene(layoutManage
         val end = if (cardSize.y > 0) Math.max((scrollOffset - layoutManager.height) / cardSize.y - 1, 0) else MAX_VISIBLE_STACK_CARDS
         val start = Math.min(end + MAX_VISIBLE_STACK_CARDS, layoutManager.itemCount - 1)
         return IntProgression.fromClosedRange(start, end, -1)
+    }
+}
+
+open class GridScene(layoutManager: CustomLayoutManager) : DefaultScene(layoutManager) {
+
+    private var internalScrollOffset
+        get() = scrollOffset / 4
+        set(value) {
+            scrollOffset = value * 4
+        }
+
+    override fun updateCardSize(measuredChildWidth: Int) {
+        cardSize.set(measuredChildWidth / 2, (measuredChildWidth.toFloat() / CARD_PROPORTION / 2).toInt())
+    }
+
+    override fun getCardViewCoords(position: Int) =
+            Pair(layoutManager.paddingLeft + if (position % 2 == 0) 0 else cardSize.x,
+                    internalScrollOffset + layoutManager.height - layoutManager.paddingBottom - (position / 2 + 1) * cardSize.y)
+
+    override fun visibleRange(): IntProgression {
+        val start = Math.min((layoutManager.height * 2 + internalScrollOffset) / cardSize.y * 2, layoutManager.itemCount - 1)
+        val end = Math.max((internalScrollOffset - layoutManager.height) / cardSize.y * 2, 0)
+        return IntProgression.fromClosedRange(start, end, -1)
+    }
+
+    override fun getMaxScroll() = layoutManager.run { (itemCount + 1) / 2 * cardSize.y - height + paddingBottom + paddingTop  }
+
+    override fun scrollBy(dy: Int): Int {
+        val consumed = if (dy < 0) {
+            Math.min(-dy, getMaxScroll() - internalScrollOffset)
+        } else {
+            -Math.min(internalScrollOffset, dy)
+        }
+        internalScrollOffset += consumed
+        return -consumed
     }
 }
