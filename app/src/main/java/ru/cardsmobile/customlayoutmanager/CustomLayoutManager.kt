@@ -9,6 +9,10 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 
 class CustomLayoutManager(val recyclerView: RecyclerView) : RecyclerView.LayoutManager() {
 
+    init {
+        isItemPrefetchEnabled = true
+    }
+    
     var currentLayout: BaseScene = StackScene(this)
         set(value) {
             preLayout = field
@@ -127,6 +131,22 @@ class CustomLayoutManager(val recyclerView: RecyclerView) : RecyclerView.LayoutM
     fun showGrid() {
         currentLayout = GridScene(this)
     }
+
+    override fun collectAdjacentPrefetchPositions(dx: Int, dy: Int, state: RecyclerView.State?, layoutPrefetchRegistry: LayoutPrefetchRegistry?) {
+        if (dy == 0 || itemCount == 0) {
+            return
+        }
+
+        val delta = Math.abs(dy) / currentLayout.cardSize.y + 1
+        if (dy < 0) {
+            val start = currentLayout.visibleRange(itemCount).first
+            IntProgression.fromClosedRange(0, Math.min(delta, itemCount - start - 1), 1).forEach { layoutPrefetchRegistry?.addPosition(it + start, it * currentLayout.cardSize.y) }
+        } else {
+            val start = currentLayout.visibleRange(itemCount).last
+            IntProgression.fromClosedRange(0, Math.min(delta, start), 1).forEach { layoutPrefetchRegistry?.addPosition(start - it, it * currentLayout.cardSize.y) }
+        }
+    }
+
 }
 
 typealias Coords = Pair<Int, Int>
