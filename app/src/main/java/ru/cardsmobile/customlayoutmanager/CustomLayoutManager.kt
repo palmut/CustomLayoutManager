@@ -3,14 +3,13 @@ package ru.cardsmobile.customlayoutmanager
 import android.graphics.Point
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.RecyclerView.LayoutParams
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 
 class CustomLayoutManager(val recyclerView: RecyclerView) : RecyclerView.LayoutManager() {
 
-    var currentLayout: BaseScene = GridScene(this)
+    var currentLayout: BaseScene = StackScene(this)
         set(value) {
             preLayout = field
             field = value.from(field)
@@ -64,9 +63,58 @@ class CustomLayoutManager(val recyclerView: RecyclerView) : RecyclerView.LayoutM
     override fun scrollVerticallyBy(dy: Int, recycler: RecyclerView.Recycler, state: RecyclerView.State): Int {
         val consumed = currentLayout.scrollBy(dy)
         // requestLayout ignored
-        onLayoutChildren(recycler, state)
+        scrollViewsOnScreen()
+
+        val visibleRange = currentLayout.visibleRange(itemCount)
+
+        if (consumed < 0) {
+            // scroll to end of the list
+            moveVisibleWindowToEnd(visibleRange, recycler)
+        } else if (consumed > 0) {
+            // scroll to start of the list
+            moveVisibleWindowToStartOfList(visibleRange, recycler)
+        }
+
         return consumed
     }
+
+    private fun moveVisibleWindowToStartOfList(visibleRange: IntProgression, recycler: RecyclerView.Recycler) {
+        val topViewPosition = getChildPosition(0)
+        val topVisiblePosition = visibleRange.first
+        // remove invisible cards above the screen
+        for (i in 0 until topViewPosition - topVisiblePosition) {
+            removeAndRecycleViewAt(0, recycler)
+        }
+        // add cards to the bottom of the screen
+        for (position in (getChildPosition(childCount - 1) - 1) downTo visibleRange.last) {
+            addMeasureAndLayoutChild(childCount, recycler, position)
+        }
+    }
+
+    private fun moveVisibleWindowToEnd(visibleRange: IntProgression, recycler: RecyclerView.Recycler) {
+        val bottomViewPosition = getChildPosition(childCount - 1)
+        val bottomVisiblePosition = visibleRange.last
+        // remove invisible cards below the screen
+        for (i in 0 until bottomVisiblePosition - bottomViewPosition) {
+            removeAndRecycleViewAt(childCount - 1, recycler)
+        }
+        // add cards to the top of the screen
+        for (position in (getChildPosition(0) + 1)..visibleRange.first) {
+            addMeasureAndLayoutChild(0, recycler, position)
+        }
+    }
+
+    private fun scrollViewsOnScreen() {
+        for (i in 0 until childCount) {
+            val view = getChildAt(i)
+            val position = getPosition(view)
+            val (x, y) = currentLayout.getCardViewCoords(position)
+            val size = currentLayout.cardSize
+            layoutDecorated(view, x, y, x + size.x, y + size.y)
+        }
+    }
+
+    private fun getChildPosition(index: Int) = getPosition(getChildAt(index))
 
     fun showLinear() {
         currentLayout = LinearScene(this)
